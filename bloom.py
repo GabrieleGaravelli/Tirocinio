@@ -1,37 +1,44 @@
 import math
 
 
-S = {7800, 4635, 67, 903, 12, 4, 921, 3030, 22, 7010}
-t = {7800, 9, 564, 4635, 345, 67, 903, 7, 9000, 12, 500, 4, 921, 12, 3030, 2323, 1763, 22, 7010, 232, 6000, 5760, 111, 93, 6466, 389, 743, 8370, 5417}
-n = []
-result = set()
+class Bloom():
 
-ts = 41
+    k=3
 
-for x in range(ts):
-    n.append(0)
+    def __init__(self, ts, S):
+        self.ts = ts
+        self.S = S
+        self.n = []
 
-def h1(x):
+        for x in range(ts):
+            self.n.append(0)
+
+        for x in S:
+            self.n[h1(x, ts)] = 1
+            self.n[h2(x, ts)] = 1
+            self.n[h3(x, ts)] = 1
+        
+    def filter(self, T):
+        self.result = set()
+        for x in T:
+            if self.n[h1(x, self.ts)] == 1 and self.n[h2(x, self.ts)] == 1 and self.n[h3(x, self.ts)] == 1:
+                self.result.add(x)
+        fp = (1 - math.e**((-self.k)*len(self.S)/self.ts))**self.k
+        print(self.result.issuperset(self.S))
+        print('Theoretical false positive rate: {}'.format(fp))
+        print('Actual false positive rate: {}'.format((len(self.result) - len(self.S))/(len(T) - len(self.S))))
+        return self.result 
+
+
+def h1(x, ts):
     return x % ts
 
-def h2(x):
+def h2(x, ts):
     return math.floor(ts * (x * 0.77 % 1))
 
-def h3(x):
+def h3(x, ts):
     return hash(str(x)) % ts
 
-for x in S:
-    n[h1(x)] = 1
-    n[h2(x)] = 1
-    n[h3(x)] = 1
-
-for x in t:
-    if n[h1(x)] == 1 and n[h2(x)] == 1 and n[h3(x)] == 1:
-        result.add(x)
-
-
-print(result.issuperset(S))
-print(result)
 
 
 
