@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import bitarray as ba
+import random
+from sklearn.utils import murmurhash3_32
 
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_consistent_length
@@ -38,7 +40,7 @@ class BloomFilter(BaseEstimator):
 
         for x in X:
             for h in self.hash:
-                self.v[h(x, self.n)] = 1
+                self.v[h(x)] = 1
 
         self.fitted = True
         
@@ -61,7 +63,7 @@ class BloomFilter(BaseEstimator):
         for x in X:
             is_element = True
             for h in self.hash:
-                if self.v[h(x, self.n)] == 0:
+                if self.v[h(x)] == 0:
                     is_element = False
                     break
             result.append(is_element)
@@ -101,7 +103,13 @@ class BloomFilter(BaseEstimator):
         n = len(self.v)
         m = self.m
         return (1 - math.e ** (-k * m / n)) ** k
-             
+ 
+class hashfunction(object):
+    def __init__(self, m):
+        self.m = m
+        self.ss = random.randint(1,99999999)
+    def __call__(self, x):
+        return murmurhash3_32(x, seed = self.ss) % self.m
 
 def h1(x, n):
     '''Simple hash function
