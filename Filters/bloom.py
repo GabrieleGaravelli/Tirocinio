@@ -10,18 +10,29 @@ from sklearn.utils import check_consistent_length
 
 class BloomFilter(BaseEstimator):
 
-    def __init__(self, n, hash):
+    def __init__(self, n=None, nhash=None, fp_rate=None):
         '''Initialize a Bloom Filter.
 
         - n (int): dimension of the array backing the Bloom Filter
-        - hash (list of function): hash functions backing the Bloom Filter
+        - nhash (int): number of hash functions backing the Bloom Filter
+        - fp_rate (int): probability of false positive
         '''
 
+        if n is None and nhash is not None and fp_rate is not None:
+            pass
+        elif nhash is None and n is not None and fp_rate is not None:
+            pass
+        elif fp_rate is None and n is not None and nhash is not None:
+            pass
+        else:
+            raise ValueError('Two out of three input must be filled')
+            
+        self.fpr = fp_rate
         self.n = n
-        self.hash = hash
-        self.v = ba.bitarray(n) 
-        self.v.setall(0)
+        self.nhash = nhash
+        
         self.fitted = False
+        
 
     def fit(self, X, y=None):
         '''Initialize the bit array with positive elements
@@ -35,8 +46,29 @@ class BloomFilter(BaseEstimator):
             
         if y is not None and (np.array(y) == False).any():
             raise ValueError('y in fit cannot contain negative labels')
-
+        
         self.m = len(X)
+        
+        if self.n is None and self.nhash is not None and self.fpr is not None:
+            x = np.log(1 - self.fpr**(1/self.nhash))
+            self.n = int(-self.nhash * self.m / x)
+            print(self.n)
+        elif self.nhash is None and self.n is not None and self.fpr is not None:
+            for k in range(100):
+                if abs(self.fpr - (1 - math.e ** (-k * self.m / self.n)) ** k) < 1E-2 :
+                    self.nhash = k
+                    print(self.nhash)
+                    break
+        elif self.fpr is None and self.n is not None and self.nhash is not None:
+            self.fpr = (1 - math.e ** (-self.nhash * self.m / self.n)) ** self.nhash
+            print(self.fpr)
+
+        hash = []
+        for i in range(self.nhash):
+                hash.append(hashfunction(self.n))
+        self.hash = hash
+        self.v = ba.bitarray(self.n) 
+        self.v.setall(0)
 
         for x in X:
             for h in self.hash:
