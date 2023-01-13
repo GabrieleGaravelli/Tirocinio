@@ -62,22 +62,23 @@ class LBF(BaseEstimator):
             n_fp = len(th_positive) + len(bf_positive)
             return n_fp
         
-def train_lbf(n, neg_query_set, keys, quantile_order):
-    threshold_list =  range(quantile_order)#non ho capito bene il criterio
-    nhash = 7
-    
-    fp_opt = neg_query_set.shape[0]
-    lbf_opt = LBF(nhash, n, 1)
-    
-    for th in threshold_list:
-        lbf = LBF(nhash, n, th)
-        lbf.fit(keys)
-        fp_act = lbf.score(neg_query_set)
-          
-        if fp_act < fp_opt:
-            fp_opt = fp_act
-            lbf_opt = lbf
-    return lbf_opt, fp_opt
+        @staticmethod
+        def train_lbf(n, neg_query_set, keys, quantile_order):
+            threshold_list =  range(quantile_order)#non ho capito bene il criterio
+            nhash = 7
+            
+            fp_opt = neg_query_set.shape[0]
+            lbf_opt = LBF(nhash, n, 1)
+            
+            for th in threshold_list:
+                lbf = LBF(nhash, n, th)
+                lbf.fit(keys)
+                fp_act = lbf.score(neg_query_set)
+                
+                if fp_act < fp_opt:
+                    fp_opt = fp_act
+                    lbf_opt = lbf
+            return lbf_opt, fp_opt
 
 def main():
     
@@ -97,7 +98,7 @@ def main():
     no_X_score = np.random.randint(low=0, high=max_th, size=len(s))
     no_X = pd.DataFrame({'data':np.array(list(s)), 'score':no_X_score})
     
-    lbf, fp = train_lbf(n, no_X, X, max_th)
+    lbf, fp = LBF.train_lbf(n, no_X, X, max_th)
     print(f'{lbf.threshold} {fp} {len(s)}')
     
 if __name__ == '__main__':
